@@ -78,11 +78,25 @@ function explain(missing, context, lead) {
 
   if (onNetlify) {
     const site = process.env.SITE_NAME ? ` ("${process.env.SITE_NAME}")` : ''
+
+    // Print what the build CAN see. "I set them and it still fails" is almost
+    // always a scope or context problem, and the difference between "Netlify
+    // passed nothing" and "Netlify passed some but not these" is the whole
+    // diagnosis — but the values must never be logged, only the names.
+    const visible = Object.keys(process.env)
+      .filter((key) => /^(PUBLIC_|SANITY|BUILD_TARGET)/.test(key))
+      .sort()
+
     lines.push(
       '',
       `  This is a Netlify build${site}, so .env is not involved — Netlify`,
       '  supplies environment variables itself, and this site has not been given',
       '  these ones.',
+      '',
+      '  Project-related variables this build can actually see:',
+      visible.length > 0
+        ? visible.map((key) => `    · ${key}`).join('\n')
+        : '    (none at all — nothing has been set on this site)',
       '',
       '  To fix this:',
       '',

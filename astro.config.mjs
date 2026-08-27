@@ -3,7 +3,8 @@ import sanity from '@sanity/astro'
 import react from '@astrojs/react'
 import {loadEnv} from 'vite'
 import {createRequire} from 'node:module'
-import {writeFile} from 'node:fs/promises'
+import {writeFile, rm, rename} from 'node:fs/promises'
+import {existsSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import path from 'node:path'
 import {readSanityEnv} from './env.mjs'
@@ -108,20 +109,39 @@ const IS_DEV = process.argv.includes('dev')
 // a second copy of the marketing site. This line makes that obvious in the log.
 if (!IS_DEV) {
   const banner = IS_STUDIO_BUILD
-    ? 'STUDIO  — Sanity Studio at /studio, / redirects to it, noindex'
+    ? 'STUDIO  — Sanity Studio served at /, nothing else, noindex'
     : 'PUBLIC SITE  — marketing pages only, no /studio route'
   console.log(`\n  Build target: ${banner}\n`)
 }
 
 /**
- * The Studio subdomain serves the same built output as the public site, so
- * without these two files it would be a second, indexable copy of the marketing
- * pages sitting on a URL nobody should land on.
+ * Turn the shared build output into a Studio-only site, with the Studio at the
+ * ROOT of its subdomain — studio.example.com/, not studio.example.com/studio.
  *
- *   _redirects  sends / straight to /studio
- *   _headers    tells search engines not to index any of it
+ * @sanity/astro cannot emit the Studio at "/" directly: it normalises
+ * studioBasePath by stripping slashes, so "/" becomes an empty string and the
+ * integration rejects it as unset. The Studio therefore has to be built at
+ * /studio and moved afterwards.
+ *
+ * Moving it is safe because a static build uses the Studio's HASH router
+ * (the island exports StudioComponentHash) — all navigation lives in "#/", the
+ * generated HTML contains no reference to its own path, and its asset URLs are
+ * absolute. So the same file works served from anywhere.
+ *
+ * What this leaves:
+ *
+ *   dist/index.html   the Studio
+ *   dist/_astro/…     its bundles
+ *   dist/_headers     noindex for the whole subdomain
+ *
+ * and no marketing pages, so the Studio subdomain is not a second copy of the
+ * public site. No redirect is involved at all, which also sidesteps Netlify's
+ * rule that an existing file shadows a non-forced redirect.
  */
 function studioSiteFiles() {
+  // Everything the public site owns, and which the Studio site must not serve.
+  const PUBLIC_SITE_OUTPUT = ['index.html', 'services']
+
   return {
     name: 'renuenc:studio-site-files',
     hooks: {
@@ -129,13 +149,32 @@ function studioSiteFiles() {
         if (!IS_STUDIO_BUILD) return
 
         const out = fileURLToPath(dir)
-        await writeFile(path.join(out, '_redirects'), '/    /studio/    302\n', 'utf8')
-        await writeFile(
-          path.join(out, '_headers'),
-          '/*\n  X-Robots-Tag: noindex\n',
-          'utf8'
-        )
-        logger.info('studio build: wrote _redirects (/ → /studio) and _headers (noindex)')
+        const studioHtml = path.join(out, 'studio', 'index.html')
+
+        if (!existsSync(studioHtml)) {
+          throw new Error(
+            '\n  The studio build produced no dist/studio/index.html.\n' +
+              '  Refusing to rearrange the output, because that would leave an\n' +
+              '  empty site. Check studioBasePath in astro.config.mjs.\n'
+          )
+        }
+
+        // Clear the marketing output first — index.html is about to be replaced
+        // by the Studio, and dist/services has no business on this domain.
+        for (const entry of PUBLIC_SITE_OUTPUT) {
+          const target = path.join(out, entry)
+          if (!existsSync(target)) continue
+          await rm(target, {recursive: true, force: true})
+          logger.info(`removed ${entry} — not part of the Studio site`)
+        }
+
+        // Promote the Studio to the root, then drop the now-empty /studio.
+        await rename(studioHtml, path.join(out, 'index.html'))
+        await rm(path.join(out, 'studio'), {recursive: true, force: true})
+        logger.info('moved the Studio to / — it is now the whole site')
+
+        await writeFile(path.join(out, '_headers'), '/*\n  X-Robots-Tag: noindex\n', 'utf8')
+        logger.info('wrote _headers (noindex)')
       },
     },
   }

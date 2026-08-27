@@ -149,7 +149,7 @@ same branch, same base directory**. The only difference is the build command.
 | | Build command | Base directory | Publish | Result |
 | --- | --- | --- | --- | --- |
 | Public site | `npm run build` | *(empty)* | `dist` | No `/studio` route is generated at all |
-| Studio | `npm run build:studio` | *(empty)* | `dist` | `/` → `/studio`, whole site `noindex` |
+| Studio | `npm run build:studio` | *(empty)* | `dist` | The Studio **is** the site, served at `/` |
 
 **Base directory is empty for both.** This is one project at the repo root, not a
 monorepo — setting a base directory will break the build.
@@ -194,16 +194,35 @@ that can rewrite the dataset has no business on a public web host.
 for that one build. You can set it as an environment variable instead of using
 the separate command if you prefer; both routes end up in the same place.
 
+### How the two sites are shaped
+
+| | Public site | Studio site |
+| --- | --- | --- |
+| `/` | the marketing home page | **the Studio** |
+| `/services/…` | the service pages | 404 |
+| `/studio` | 404 — never generated | 404 — the Studio is at `/` |
+
+The Studio is moved to the root during its build. `@sanity/astro` cannot emit it
+at `/` directly — it strips slashes from `studioBasePath`, so `"/"` normalises to
+an empty string and is rejected as unset — so it is built at `/studio` and moved
+afterwards. That is safe because a static build uses the Studio's hash router:
+all navigation lives in `#/`, the generated HTML holds no reference to its own
+path, and its asset URLs are absolute, so the file works served from anywhere.
+
+No redirect is involved, which also avoids Netlify's rule that an existing file
+shadows a non-forced redirect — the bug that made the Studio subdomain show the
+marketing page.
+
 ### Two things that go wrong first time
 
 **The Studio site serving the marketing pages.** That means it ran
 `npm run build` instead of `npm run build:studio` — Netlify auto-detects Astro
 and fills in the default command when you create a site, so it has to be changed
-by hand. Every build now prints which target it built as its first line:
+by hand. Every build prints which target it built as its first line:
 
 ```
 Build target: PUBLIC SITE  — marketing pages only, no /studio route
-Build target: STUDIO  — Sanity Studio at /studio, / redirects to it, noindex
+Build target: STUDIO  — Sanity Studio served at /, nothing else, noindex
 ```
 
 If the Studio site's log says PUBLIC SITE, that is the bug. Fix the command and
