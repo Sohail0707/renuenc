@@ -34,6 +34,7 @@ src/
 scripts/
   seed-content.mjs      the starter page copy — plain strings, edit freely
   seed.mjs              uploads photos, writes the document
+  setup-deploy-hook.mjs wires Publish to a Netlify build
 seed/images/            drop the real photos here (git-ignored)
 public/images/          hero photo and logo
 ```
@@ -272,48 +273,54 @@ production Studio URL.
 ## 5. Make Publish rebuild the site
 
 Content is fetched at build time, so publishing in the Studio changes nothing
-until a build runs. Point Sanity at a Netlify build hook and the Publish button
-does it for you.
+until a build runs. One command wires the Publish button to a Netlify build.
 
-**Get the build hook** (already done for this project):
-Netlify → the **public** site → **Site configuration → Build & deploy → Build
-hooks → Add build hook**. Copy the URL. For this project it is:
+Get the build hook first: Netlify → the **public** site → **Site configuration →
+Build & deploy → Build hooks → Add build hook**. Then:
 
-```
-https://api.netlify.com/build_hooks/6a903ddc07893270cb045aa0
+```bash
+npm run setup:deploy-hook -- https://api.netlify.com/build_hooks/YOUR_HOOK_ID
 ```
 
-**Create the webhook** at sanity.io/manage → project `243k5ekb` → **API** →
-**Webhooks** → **Create webhook**:
+**This is already set up for this project.** Re-running replaces the existing
+webhook rather than adding a second one, so it is safe to run again — for
+example if the build hook URL ever changes.
 
-| Field | Value |
-| --- | --- |
-| Name | `Netlify rebuild on publish` |
-| URL | the build hook URL above |
-| Dataset | `production` |
-| Trigger on | Create, Update, Delete |
-| Filter | `_type == "servicePage"` |
-| HTTP method | `POST` |
-| API version | `v2021-03-25` |
-| Drafts | **off** |
+Two settings do the real work, and the script sets both:
 
-The last two rows are the ones that matter. Without the **filter**, every image
-upload triggers a build. Without **drafts off**, every autosave does — and the
-Studio autosaves constantly, so you would burn a build every few seconds while
-someone is typing.
-
-This has to be done in the UI. Sanity's public management API only exposes the
-older webhook type, which has no filter and fires on every mutation in the
-dataset — exactly the build-spamming behaviour above. The filtered kind is only
-creatable from Manage or the interactive CLI prompt.
-
-**Check it works:** publish a change, then Netlify → **Deploys** should show a
-build starting within a few seconds. Delivery history is at sanity.io/manage →
-**API → Webhooks →** the hook **→ Deliveries**.
+| Setting | Value | Why |
+| --- | --- | --- |
+| `rule.filter` | `_type == 'servicePage'` | Without it, every image upload triggers a build |
+| `includeDrafts` | `false` | The Studio autosaves constantly; without this you burn a build every few seconds while someone types |
 
 A build takes a minute or two, so Publish is not instant. That is inherent to a
 statically generated site and worth saying out loud when demoing, so a slow
 refresh does not read as a bug.
+
+### Checking it fired
+
+Delivery history is at sanity.io/manage → **API → Webhooks →** the hook →
+**Deliveries**, or over HTTP:
+
+```bash
+curl -H "Authorization: Bearer $SANITY_API_WRITE_TOKEN" "https://243k5ekb.api.sanity.io/v2021-10-04/hooks/projects/243k5ekb/HOOK_ID/attempts"
+```
+
+A healthy delivery looks like `resultCode: 200, isFailure: false`.
+
+### If you ever set this up by hand
+
+Three things about Sanity's webhook API are easy to trip over:
+
+- The endpoint is the **project subdomain** (`<projectId>.api.sanity.io`), not
+  `api.sanity.io`.
+- A GROQ-powered webhook needs `type: "document"` and a nested `rule` object
+  (`rule.on`, `rule.filter`, `rule.projection`). A flat `on`/`filter` creates the
+  older *transaction* hook, which has no filter and fires on every mutation in
+  the dataset — the build-spamming behaviour above.
+- **Listing them requires the `vX` API.** The dated versions answer
+  "Document hook not supported in this API version" and return an empty array,
+  which looks exactly like having no webhooks at all.
 
 ---
 
