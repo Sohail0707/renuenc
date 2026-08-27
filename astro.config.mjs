@@ -102,6 +102,17 @@ if (!['site', 'studio'].includes(BUILD_TARGET)) {
 const IS_STUDIO_BUILD = BUILD_TARGET === 'studio'
 const IS_DEV = process.argv.includes('dev')
 
+// Say out loud which of the two things is being built. Both Netlify sites run
+// from the same repo, so the single most likely deploy mistake is the Studio
+// site running the public build command — which fails silently and just serves
+// a second copy of the marketing site. This line makes that obvious in the log.
+if (!IS_DEV) {
+  const banner = IS_STUDIO_BUILD
+    ? 'STUDIO  — Sanity Studio at /studio, / redirects to it, noindex'
+    : 'PUBLIC SITE  — marketing pages only, no /studio route'
+  console.log(`\n  Build target: ${banner}\n`)
+}
+
 /**
  * The Studio subdomain serves the same built output as the public site, so
  * without these two files it would be a second, indexable copy of the marketing

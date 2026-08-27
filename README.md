@@ -194,6 +194,31 @@ that can rewrite the dataset has no business on a public web host.
 for that one build. You can set it as an environment variable instead of using
 the separate command if you prefer; both routes end up in the same place.
 
+### Two things that go wrong first time
+
+**The Studio site serving the marketing pages.** That means it ran
+`npm run build` instead of `npm run build:studio` — Netlify auto-detects Astro
+and fills in the default command when you create a site, so it has to be changed
+by hand. Every build now prints which target it built as its first line:
+
+```
+Build target: PUBLIC SITE  — marketing pages only, no /studio route
+Build target: STUDIO  — Sanity Studio at /studio, / redirects to it, noindex
+```
+
+If the Studio site's log says PUBLIC SITE, that is the bug. Fix the command and
+**Deploys → Trigger deploy → Clear cache and deploy site**.
+
+**The build failing on missing environment variables.** Adding variables in the
+Netlify UI does not rebuild anything — you have to trigger a deploy afterwards.
+Two more things to check if the build still cannot see them:
+
+- **Scope.** Netlify lets a variable be scoped to Builds / Functions / Runtime.
+  It must include **Builds**.
+- **Context.** A variable scoped only to Deploy Previews is invisible to a
+  production build. Use **All deploy contexts**, or make sure Production is
+  included.
+
 ### Site 1 — the public site
 
 1. Netlify → **Add new site → Import an existing project** → pick the repo.

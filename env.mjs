@@ -70,22 +70,59 @@ function explain(missing, context, lead) {
     if (spec) lines.push(`        ${spec.why}`)
   }
 
-  lines.push(
-    '',
-    '  To fix this:',
-    '',
-    '    1. Copy .env.example to .env   →   cp .env.example .env',
-    '    2. Open .env and fill in the real values.',
-    '       Project ID and dataset are on https://sanity.io/manage',
-    '       (pick your project → the ID is shown at the top).',
-    '       An editor token, if you need one, is under API → Tokens.',
-    '    3. Run the command again.',
-    '',
-    '  If you are deploying, set the same variables in your host\'s',
-    '  environment settings (on Netlify: Site configuration → Environment',
-    '  variables) — .env is not uploaded.',
-    ''
-  )
+  // Telling a CI box to "copy .env.example to .env" is useless advice — there is
+  // no .env on a build server and there never will be. Give each place the fix
+  // that actually applies to it.
+  const onNetlify = Boolean(process.env.NETLIFY)
+  const onCI = onNetlify || Boolean(process.env.CI)
+
+  if (onNetlify) {
+    const site = process.env.SITE_NAME ? ` ("${process.env.SITE_NAME}")` : ''
+    lines.push(
+      '',
+      `  This is a Netlify build${site}, so .env is not involved — Netlify`,
+      '  supplies environment variables itself, and this site has not been given',
+      '  these ones.',
+      '',
+      '  To fix this:',
+      '',
+      '    1. Netlify → this site → Site configuration → Environment variables',
+      '    2. Add each variable above. Values are on https://sanity.io/manage',
+      '       (pick your project → the ID is shown at the top).',
+      '    3. Check the scope: the variable must be available to Builds, and to',
+      '       the Production context. A variable scoped only to Functions or only',
+      '       to Deploy Previews will not be visible here.',
+      '    4. Deploys → Trigger deploy → Clear cache and deploy site.',
+      '',
+      '  Adding a variable does not rebuild on its own — you have to trigger it.',
+      ''
+    )
+  } else if (onCI) {
+    lines.push(
+      '',
+      '  This looks like a CI build, so .env is not involved. Set these in the',
+      '  build environment / secrets for the job. Values are on',
+      '  https://sanity.io/manage.',
+      ''
+    )
+  } else {
+    lines.push(
+      '',
+      '  To fix this:',
+      '',
+      '    1. Copy .env.example to .env   →   cp .env.example .env',
+      '    2. Open .env and fill in the real values.',
+      '       Project ID and dataset are on https://sanity.io/manage',
+      '       (pick your project → the ID is shown at the top).',
+      '       An editor token, if you need one, is under API → Tokens.',
+      '    3. Run the command again.',
+      '',
+      '  Deploying? Set the same variables in your host\'s environment settings',
+      '  (on Netlify: Site configuration → Environment variables) — .env is',
+      '  never uploaded.',
+      ''
+    )
+  }
 
   return lines.join('\n')
 }
