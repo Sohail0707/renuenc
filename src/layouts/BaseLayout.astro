@@ -1,0 +1,48 @@
+---
+import UtilityBar from '../components/UtilityBar.astro'
+import Masthead from '../components/Masthead.astro'
+import '../styles/style.css'
+import '../styles/sections.css'
+
+interface Props {
+  title: string
+  description?: string
+}
+
+const {title, description} = Astro.props
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+{description && <meta name="description" content={description}>}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<UtilityBar />
+<Masthead />
+
+<slot />
+
+<script is:inline>
+  // Only behaviour on the page: open/close the mobile menu. No dropdown logic —
+  // the "Our Services" caret is visual only for this demo.
+  (function () {
+    var burger = document.querySelector('.burger');
+    var nav = document.getElementById('primary-nav');
+    burger.addEventListener('click', function () {
+      var open = burger.getAttribute('aria-expanded') === 'true';
+      burger.setAttribute('aria-expanded', String(!open));
+      burger.setAttribute('aria-label', open ? 'Open menu' : 'Close menu');
+      nav.classList.toggle('is-open', !open);
+    });
+  })();
+</script>
+
+</body>
+</html>

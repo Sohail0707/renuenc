@@ -1,0 +1,38 @@
+{
+  "name": "renuenc",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "build:studio": "cross-env BUILD_TARGET=studio astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "seed": "node scripts/seed.mjs"
+  },
+  "dependencies": {
+    "@astrojs/react": "^4.4.2",
+    "@portabletext/to-html": "^6.0.0",
+    "@sanity/astro": "^3.5.1",
+    "@sanity/client": "^8.3.0",
+    "@sanity/image-url": "^2.1.1",
+    "@sanity/vision": "^6.11.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@types/react-is": "^19.2.0",
+    "astro": "^5.18.2",
+    "dotenv": "^17.4.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-is": "^19.2.8",
+    "sanity": "^6.11.0",
+    "styled-components": "^6.5.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.3.0",
+    "cross-env": "^10.1.0",
+    "typescript": "^5.9.3"
+  }
+}

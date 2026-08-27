@@ -1,0 +1,41 @@
+---
+import PortableText from '../PortableText.astro'
+import {croppedUrl} from '../../lib/sanity'
+import type {IntroWithImage} from '../../lib/types'
+
+interface Props {
+  section: IntroWithImage
+}
+
+const {section} = Astro.props
+
+// Dropdown values map straight onto class names — one option, one class,
+// nothing computed. `intro--imageLeft` swaps the two grid columns.
+const layout = section.layout === 'imageLeft' ? 'imageLeft' : 'imageRight'
+const background = section.background === 'lightGrey' ? 'lightGrey' : 'white'
+
+const src = section.image ? croppedUrl(section.image, 1200, 900) : null
+---
+<section class={`section section--${background} intro intro--${layout}`}>
+  <div class="section__inner">
+    <div class="intro__grid">
+      <div class="intro__text">
+        {section.heading && <h2 class="section__heading">{section.heading}</h2>}
+        <PortableText value={section.body} />
+      </div>
+
+      {src && (
+        <div class="intro__media">
+          <img
+            src={src}
+            width="1200"
+            height="900"
+            alt={section.imageAlt ?? ''}
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      )}
+    </div>
+  </div>
+</section>

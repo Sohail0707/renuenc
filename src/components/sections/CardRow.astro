@@ -1,0 +1,49 @@
+---
+import {croppedUrl} from '../../lib/sanity'
+import type {CardRow} from '../../lib/types'
+
+interface Props {
+  section: CardRow
+}
+
+const {section} = Astro.props
+
+const allowed = ['white', 'lightGrey', 'brandGreen'] as const
+const background = allowed.includes(section.background as never)
+  ? (section.background as (typeof allowed)[number])
+  : 'white'
+
+const cards = section.cards ?? []
+---
+<section class={`section section--${background}`}>
+  <div class="section__inner">
+    <div class="section__head">
+      {section.heading && <h2 class="section__heading">{section.heading}</h2>}
+      {section.intro && <p class="section__intro">{section.intro}</p>}
+    </div>
+
+    {cards.length > 0 && (
+      <div class="cards">
+        {cards.map((card) => (
+          <article class="card">
+            {card.image && (
+              <img
+                class="card__img"
+                src={croppedUrl(card.image, 900, 600)}
+                width="900"
+                height="600"
+                alt={card.imageAlt ?? ''}
+                loading="lazy"
+                decoding="async"
+              />
+            )}
+            <div class="card__body">
+              {card.title && <h3 class="card__title">{card.title}</h3>}
+              {card.body && <p class="card__text">{card.body}</p>}
+            </div>
+          </article>
+        ))}
+      </div>
+    )}
+  </div>
+</section>

@@ -1,0 +1,32 @@
+---
+// Nav bar — unchanged from the original static build. The only edit is that
+// "Home" now points at "/" instead of "#", so service pages have a way back.
+---
+<!-- ================= 2. NAV BAR ================= -->
+<header class="masthead">
+  <div class="masthead__inner">
+    <a class="brand" href="/">
+      <img src="/images/renue-nc-logo.png" width="315" height="124"
+           alt="Renue Systems of North Carolina">
+    </a>
+
+    <button class="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="nav" id="primary-nav" aria-label="Primary">
+      <ul class="nav__list">
+        <li><a class="nav__link" href="/">Home</a></li>
+        <li>
+          <a class="nav__link nav__link--has-sub" href="#">
+            Our Services
+            <svg class="caret" viewBox="0 0 12 8" aria-hidden="true" focusable="false">
+              <path d="M1 1.5 6 6.5l5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </li>
+        <li><a class="nav__cta" href="#">Free Quote</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>

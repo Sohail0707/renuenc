@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import Hero from '../components/Hero.astro'
+import {getAllServicePages} from '../lib/queries'
+
+// Fetched at build time. Nothing here runs in the browser.
+const pages = await getAllServicePages()
+---
+<BaseLayout
+  title="Renue Systems of North Carolina — Commercial Deep Cleaning"
+  description="Expert commercial deep cleaning services in North Carolina. Serving hotels and commercial properties since 1991."
+>
+  <Hero />
+
+  <section class="section section--lightGrey">
+    <div class="section__inner">
+      {pages.length > 0 ? (
+        <>
+          <div class="section__head">
+            <h2 class="section__heading">Our services</h2>
+            <p class="section__intro">
+              Every page below is built and ordered in the Studio. Change the order of the
+              sections there and this site rebuilds to match.
+            </p>
+          </div>
+          <ul class="pagelist">
+            {pages.map((page) => (
+              <li>
+                <a href={`/services/${page.slug}`}>
+                  <span>{page.title}</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M13.2 5.6 11.8 7l4 4H4v2h11.8l-4 4 1.4 1.4L19.6 12l-6.4-6.4Z"/>
+                  </svg>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div class="notice">
+          <h2>No service pages yet</h2>
+          <p>
+            The site is connected to Sanity but the dataset is empty, so there is nothing to
+            list here.
+          </p>
+          <p>
+            Run <code>npm run seed</code> to create the Tile &amp; Grout page, or open{' '}
+            <a href="/studio">the Studio</a> and build one by hand.
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>

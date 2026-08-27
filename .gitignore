@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.astro/
+
+# environment — never commit real project IDs or tokens
+.env
+.env.*
+!.env.example
+
+# editor / OS
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# netlify
+.netlify/
+
+# seed photos are supplied per-demo, not committed
+seed/images/*
+!seed/images/README.md
+!seed/images/placeholder.jpg

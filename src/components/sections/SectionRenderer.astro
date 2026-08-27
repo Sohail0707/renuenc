@@ -1,0 +1,39 @@
+---
+import IntroWithImage from './IntroWithImage.astro'
+import ChecklistGrid from './ChecklistGrid.astro'
+import CardRow from './CardRow.astro'
+import FaqAccordion from './FaqAccordion.astro'
+import BeforeAfterStrip from './BeforeAfterStrip.astro'
+import type {Section} from '../../lib/types'
+
+interface Props {
+  sections?: Section[]
+}
+
+const {sections = []} = Astro.props
+
+/**
+ * The whole page builder, in one map: a section's `_type` in Sanity picks the
+ * component that draws it. Order comes straight from the array, so dragging a
+ * section in the Studio moves it on the page — there is no second list of
+ * positions to keep in sync.
+ *
+ * Adding a sixth section type means one schema file and one line here.
+ */
+const COMPONENTS = {
+  introWithImage: IntroWithImage,
+  checklistGrid: ChecklistGrid,
+  cardRow: CardRow,
+  faqAccordion: FaqAccordion,
+  beforeAfterStrip: BeforeAfterStrip,
+} as const
+---
+{
+  sections.map((section) => {
+    const Component = COMPONENTS[section._type as keyof typeof COMPONENTS]
+    // A section type that exists in the data but not in the code is skipped
+    // rather than crashing the build — the rest of the page still renders.
+    if (!Component) return null
+    return <Component section={section as never} />
+  })
+}

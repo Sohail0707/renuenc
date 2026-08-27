@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import SectionRenderer from '../../components/sections/SectionRenderer.astro'
+import {getAllServicePages} from '../../lib/queries'
+import type {ServicePage} from '../../lib/types'
+
+/**
+ * Static generation: every service page in Sanity becomes a real .html file at
+ * build time, with its content already in the markup. Nothing is fetched in the
+ * browser, so Google (and anyone reading with JavaScript off) sees the full page.
+ */
+export async function getStaticPaths() {
+  const pages = await getAllServicePages()
+  return pages.map((page) => ({
+    params: {slug: page.slug},
+    props: {page},
+  }))
+}
+
+interface Props {
+  page: ServicePage
+}
+
+const {page} = Astro.props
+---
+<BaseLayout
+  title={page.seoTitle || `${page.title} — Renue Systems of North Carolina`}
+  description={page.seoDescription}
+>
+  <div class="page-head">
+    <div class="page-head__inner">
+      <p class="eyebrow">Commercial Deep Cleaning</p>
+      <h1>{page.title}</h1>
+    </div>
+  </div>
+
+  <SectionRenderer sections={page.sections} />
+</BaseLayout>

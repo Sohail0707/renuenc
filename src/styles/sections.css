@@ -1,0 +1,439 @@
+/* ==========================================================================
+   Renue NC — page-builder sections
+
+   Loaded AFTER style.css and adds nothing to the hero's selectors, so the
+   hero renders exactly as it did in the static build. Everything here is
+   built on the tokens already declared at :root in style.css
+   (--brand-green, --ink, --font-head, --wrap, --gutter …).
+   ========================================================================== */
+
+:root {
+  /* A green-tinted grey rather than a neutral one, so the "Light grey"
+     background reads as part of this brand and not as a default. */
+  --grey-bg: #F3F6F1;
+  --line: #E2E7DE;
+  --muted: #55604F;
+
+  --section-y: clamp(3.25rem, 7vw, 5.5rem);
+  --radius: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Shared section shell
+   -------------------------------------------------------------------------- */
+.section {
+  padding-block: var(--section-y);
+}
+
+.section__inner {
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Background dropdowns. These are the classes the Studio's "Background colour"
+   field maps onto — one class per option, nothing computed. */
+.section--white { background: var(--white); color: var(--ink); }
+.section--lightGrey { background: var(--grey-bg); color: var(--ink); }
+.section--brandGreen { background: var(--brand-green); color: var(--white); }
+
+/* On green everything flips to white; the muted greys would disappear. */
+.section--brandGreen .section__heading { color: var(--white); }
+.section--brandGreen .section__intro { color: rgba(255, 255, 255, 0.86); }
+
+.section__heading {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: clamp(1.9rem, 3.6vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.section__intro {
+  margin: 0 0 2.5rem;
+  max-width: 62ch;
+  font-size: clamp(1rem, 1.1vw, 1.0625rem);
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+/* Heading + intro stacked above a grid. */
+.section__head {
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+.section__head .section__intro { margin-bottom: 0; }
+
+/* A short brand rule above the heading, so each section has a visible start. */
+.section__heading::before {
+  content: "";
+  display: block;
+  width: 46px;
+  height: 3px;
+  margin-bottom: 1.1rem;
+  border-radius: 2px;
+  background: var(--brand-green);
+}
+.section--brandGreen .section__heading::before { background: var(--white); }
+
+/* --------------------------------------------------------------------------
+   Rich text coming out of Portable Text
+   -------------------------------------------------------------------------- */
+.rte > * { margin-block: 0 1.15rem; }
+.rte > *:last-child { margin-bottom: 0; }
+.rte p {
+  font-size: clamp(1rem, 1.1vw, 1.0625rem);
+  line-height: 1.75;
+  color: var(--muted);
+}
+.rte h3 {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-top: 1.75rem;
+}
+.rte ul {
+  padding-left: 1.15rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.rte li { margin-bottom: 0.4rem; }
+.rte strong { color: var(--ink); font-weight: 700; }
+.rte a {
+  color: var(--brand-green-dark);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.rte a:hover { color: var(--ink); }
+
+/* --------------------------------------------------------------------------
+   1. Text with a photo beside it
+
+   The "Image left / Image right" dropdown is the whole point of the demo, so
+   it is done with explicit grid columns rather than flex-direction — the
+   source order stays text-first for screen readers either way.
+   -------------------------------------------------------------------------- */
+.intro__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+}
+
+.intro__text { min-width: 0; }
+.intro__media { min-width: 0; }
+
+.intro__media img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+/* Both items are pinned to row 1 explicitly, not just to a column.
+   The text comes first in the DOM, so under "Image left" it takes column 2 and
+   the grid's placement cursor is already past column 1 — auto-placement never
+   flows backwards, so the photo would drop to a second row and leave a hole
+   above it. Naming the row for both is what keeps them side by side. */
+
+/* Default: text in column 1, photo in column 2. */
+.intro--imageRight .intro__text { grid-column: 1; grid-row: 1; }
+.intro--imageRight .intro__media { grid-column: 2; grid-row: 1; }
+
+/* Flipped: photo in column 1, text in column 2. Same DOM order. */
+.intro--imageLeft .intro__text { grid-column: 2; grid-row: 1; }
+.intro--imageLeft .intro__media { grid-column: 1; grid-row: 1; }
+
+/* --------------------------------------------------------------------------
+   2. Tick-list of what is included
+   -------------------------------------------------------------------------- */
+.checklist {
+  display: grid;
+  gap: 0 clamp(1.5rem, 3vw, 2.75rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.checklist--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.checklist--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.checklist li {
+  display: grid;
+  grid-template-columns: 1.35rem 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  padding-block: 0.8rem;
+  border-top: 1px solid var(--line);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.checklist .tick {
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-top: 0.05rem;
+  fill: var(--brand-green);
+}
+
+/* --------------------------------------------------------------------------
+   3. Row of cards with photos
+   -------------------------------------------------------------------------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* On the grey and green fills a bordered white card looks pasted on; drop the
+   border and let the background do the separating. */
+.section--lightGrey .card,
+.section--brandGreen .card { border-color: transparent; }
+
+.card__img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+
+.card__body { padding: 1.35rem 1.4rem 1.6rem; }
+
+.card__title {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.45rem;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.card__text {
+  margin: 0;
+  font-size: 0.9688rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------------------
+   4. Questions and answers
+   Native <details>/<summary> — opens and closes with zero JavaScript.
+   -------------------------------------------------------------------------- */
+.faq {
+  display: grid;
+  gap: 0 clamp(1.5rem, 3vw, 3rem);
+  align-content: start;
+  align-items: start;
+}
+.faq--one { grid-template-columns: minmax(0, 1fr); max-width: 62rem; }
+.faq--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.faq__item {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-top: -1px;
+  align-self: start;
+}
+
+.faq__q {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 0;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 1.6vw, 1.3rem);
+  line-height: 1.25;
+  color: var(--ink);
+}
+.faq__q::-webkit-details-marker { display: none; }
+.faq__q:hover { color: var(--brand-green-dark); }
+
+.faq__sign {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.2rem;
+  flex: none;
+  fill: none;
+  stroke: var(--brand-green);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: transform 0.18s ease;
+}
+.faq__item[open] .faq__sign { transform: rotate(45deg); }
+
+.faq__a {
+  margin: 0;
+  padding: 0 2.25rem 1.35rem 0;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq__sign { transition: none; }
+}
+
+/* --------------------------------------------------------------------------
+   5. Before and after photos
+   Two across, so an uploaded before/after pair lands side by side.
+   -------------------------------------------------------------------------- */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+.strip__shot { margin: 0; }
+
+.strip__shot img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+.strip__shot figcaption {
+  margin-top: 0.6rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------------------
+   Page head for service pages — the hero's type scale and tokens, without
+   the photograph, so a service page reads as the same site.
+   -------------------------------------------------------------------------- */
+.page-head {
+  background: var(--ink);
+  padding: clamp(2.75rem, 6vw, 4.5rem) 0 clamp(2.5rem, 5vw, 4rem);
+}
+
+.page-head__inner {
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.page-head .eyebrow { color: #A9D293; }
+
+.page-head h1 {
+  margin: 0;
+  max-width: 20ch;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: clamp(2.25rem, 5.2vw, 3.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--white);
+  text-wrap: balance;
+}
+
+/* --------------------------------------------------------------------------
+   Index of the pages that exist, under the hero on the home page, so the demo
+   has somewhere to click through to.
+   -------------------------------------------------------------------------- */
+.pagelist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pagelist a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 100%;
+  padding: 1.15rem 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.3rem;
+  line-height: 1.15;
+  color: var(--ink);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.pagelist a:hover { border-color: var(--brand-green); color: var(--brand-green-dark); }
+.pagelist a svg { width: 1rem; height: 1rem; flex: none; fill: var(--brand-green); }
+
+.notice {
+  border: 1px dashed var(--brand-green);
+  border-radius: var(--radius);
+  background: var(--grey-bg);
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+.notice h2 {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-head);
+  font-size: 1.6rem;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.notice p { margin: 0 0 0.75rem; color: var(--muted); line-height: 1.7; }
+.notice p:last-child { margin-bottom: 0; }
+.notice code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+}
+
+/* --------------------------------------------------------------------------
+   Breakpoints — every multi-column layout above collapses to one column on a
+   phone. Checked at 375, 768 and 1280.
+   -------------------------------------------------------------------------- */
+
+/* Between 1280 and 768: three-ups drop to two, the split section stays split. */
+@media (max-width: 1024px) {
+  .checklist--three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Narrow tablet and below: the text/photo split stacks, photo on top under
+   both layout settings — a photo below its paragraph reads as an orphan. */
+@media (max-width: 860px) {
+  .intro__grid { grid-template-columns: minmax(0, 1fr); }
+  .intro--imageRight .intro__text,
+  .intro--imageLeft .intro__text { grid-column: 1; grid-row: 2; }
+  .intro--imageRight .intro__media,
+  .intro--imageLeft .intro__media { grid-column: 1; grid-row: 1; }
+
+  .faq--two { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Phone: one column, everywhere. */
+@media (max-width: 640px) {
+  .checklist--two,
+  .checklist--three { grid-template-columns: minmax(0, 1fr); }
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  .strip { grid-template-columns: minmax(0, 1fr); }
+  .faq__a { padding-right: 0; }
+}

@@ -1,0 +1,34 @@
+# ---------------------------------------------------------------------------
+# One repo, one branch, TWO Netlify sites.
+#
+#   Public site   BUILD_TARGET=site    (or unset)   -> no /studio route exists
+#   Studio site   BUILD_TARGET=studio              -> / redirects to /studio
+#
+# Both use the same build command below. The only difference between them is
+# the BUILD_TARGET environment variable, set per-site in the Netlify UI under
+# Site configuration -> Environment variables.
+#
+# No secrets live in this file. PUBLIC_SANITY_* go in each site's environment
+# variables. SANITY_API_WRITE_TOKEN goes on NEITHER site — it is only used
+# locally by `npm run seed`.
+# ---------------------------------------------------------------------------
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# The Studio build writes its own _redirects (/ -> /studio) and _headers
+# (X-Robots-Tag: noindex) into dist/, so there is nothing site-specific to
+# configure here. See studioSiteFiles() in astro.config.mjs.
+
+# Deploy previews and branch builds would each need their own CORS origin
+# registered with Sanity before the Studio would load on them, so keep the
+# Studio to its production URL only.
+[context.deploy-preview.environment]
+  BUILD_TARGET = "site"
+
+[context.branch-deploy.environment]
+  BUILD_TARGET = "site"

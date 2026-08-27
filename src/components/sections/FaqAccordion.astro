@@ -1,0 +1,36 @@
+---
+import type {FaqAccordion} from '../../lib/types'
+
+interface Props {
+  section: FaqAccordion
+}
+
+const {section} = Astro.props
+
+const columns = section.columns === 'two' ? 'two' : 'one'
+const items = (section.items ?? []).filter((item) => item?.question)
+---
+<section class="section section--lightGrey">
+  <div class="section__inner">
+    <div class="section__head">
+      {section.heading && <h2 class="section__heading">{section.heading}</h2>}
+    </div>
+
+    {items.length > 0 && (
+      <div class={`faq faq--${columns}`}>
+        {items.map((item) => (
+          <details class="faq__item">
+            <summary class="faq__q">
+              <span>{item.question}</span>
+              {/* A plus that rotates into a cross when the answer is open. */}
+              <svg class="faq__sign" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </summary>
+            {item.answer && <p class="faq__a">{item.answer}</p>}
+          </details>
+        ))}
+      </div>
+    )}
+  </div>
+</section>

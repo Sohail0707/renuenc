@@ -1,0 +1,28 @@
+---
+import {toHTML} from '@portabletext/to-html'
+import type {PortableTextBlock} from '../lib/types'
+
+interface Props {
+  value?: PortableTextBlock[]
+}
+
+const {value} = Astro.props
+
+// Rendered to a string at build time, so the copy is in the initial HTML.
+const html =
+  Array.isArray(value) && value.length > 0
+    ? toHTML(value as never, {
+        components: {
+          marks: {
+            link: ({children, value: mark}) => {
+              const href = (mark as {href?: string} | undefined)?.href ?? '#'
+              const external = /^https?:\/\//i.test(href)
+              const rel = external ? ' rel="noopener noreferrer" target="_blank"' : ''
+              return `<a href="${href}"${rel}>${children}</a>`
+            },
+          },
+        },
+      })
+    : ''
+---
+{html && <div class="rte" set:html={html} />}
