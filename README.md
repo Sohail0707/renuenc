@@ -143,16 +143,21 @@ its job and you can forget about it.
 
 ## 4. Deploy to Netlify — two sites, one repo
 
-The public site and the Studio go to **two separate Netlify sites built from the
-same repo and branch**. The only thing that differs is one environment variable:
+The public site and the Studio are **two Netlify sites built from the same repo,
+same branch, same base directory**. The only difference is the build command.
 
-| | `BUILD_TARGET` | Result |
-| --- | --- | --- |
-| Public site | `site` (or unset) | No `/studio` route is generated at all |
-| Studio | `studio` | `/` redirects to `/studio`, whole site `noindex` |
+| | Build command | Base directory | Publish | Result |
+| --- | --- | --- | --- | --- |
+| Public site | `npm run build` | *(empty)* | `dist` | No `/studio` route is generated at all |
+| Studio | `npm run build:studio` | *(empty)* | `dist` | `/` → `/studio`, whole site `noindex` |
 
-`netlify.toml` holds the build command and publish directory for both, so there
-is nothing to configure per-site except the environment variables.
+**Base directory is empty for both.** This is one project at the repo root, not a
+monorepo — setting a base directory will break the build.
+
+`netlify.toml` deliberately does **not** set a build command. Anything in
+netlify.toml overrides the per-site UI setting, so a command there would force
+both sites to build the same thing. It sets only `publish = "dist"` and the Node
+version, which are the same for both.
 
 ### A note on the subdomain
 
@@ -163,44 +168,62 @@ because you do not control DNS for `netlify.app`.
 
 Two options that do work:
 
-- **`renuenc-studio.netlify.app`** — just name the second site `renuenc-studio`.
-  Nothing else changes.
+- **`renuenc-studio.netlify.app`** — name the second site `renuenc-studio`.
 - **`studio.renuenc.com`** — the real answer once the domain is in play. Add it
-  as a custom domain on the Studio site and point a CNAME at it. This is what
-  you want in production anyway; the client should never see a netlify.app URL.
+  as a custom domain on the Studio site. The client should never see a
+  netlify.app URL in production.
 
 Nothing in the code depends on the hostname, so switching later is a DNS change
 and one CORS entry, not a rebuild.
 
+### Environment variables
+
+Both sites get the **same three** variables. There is no fourth.
+
+| Variable | Value | Public site | Studio site |
+| --- | --- | :---: | :---: |
+| `PUBLIC_SANITY_PROJECT_ID` | `243k5ekb` | yes | yes |
+| `PUBLIC_SANITY_DATASET` | `production` | yes | yes |
+| `PUBLIC_SANITY_API_VERSION` | `2024-10-01` | yes | yes |
+| `SANITY_API_WRITE_TOKEN` | — | **no** | **no** |
+
+The write token stays on your machine. Only `npm run seed` uses it, and a token
+that can rewrite the dataset has no business on a public web host.
+
+`BUILD_TARGET` does not need to be set either — `npm run build:studio` sets it
+for that one build. You can set it as an environment variable instead of using
+the separate command if you prefer; both routes end up in the same place.
+
 ### Site 1 — the public site
 
 1. Netlify → **Add new site → Import an existing project** → pick the repo.
-2. Leave the build settings alone; `netlify.toml` supplies them.
-3. **Site configuration → Environment variables**, add:
-   - `PUBLIC_SANITY_PROJECT_ID`
-   - `PUBLIC_SANITY_DATASET`
-   - `PUBLIC_SANITY_API_VERSION`
-   - `BUILD_TARGET` = `site`  *(optional — it is the default)*
-4. Deploy.
-
-Do **not** put `SANITY_API_WRITE_TOKEN` on either site. Only `npm run seed` uses
-it, and a write token has no business on a web host.
+2. Build settings: base directory **empty**, build command `npm run build`,
+   publish directory `dist`.
+3. **Site configuration → Environment variables** → add the three
+   `PUBLIC_SANITY_*` values above.
+4. Deploy. Rename the site under **Site configuration → General → Site details**
+   if you want a tidier URL.
 
 ### Site 2 — the Studio
 
 1. **Add new site → Import an existing project** → the **same repo**.
-2. **Site configuration → General → Site details → Change site name** →
+2. Build settings: base directory **empty**, build command
+   `npm run build:studio`, publish directory `dist`.
+3. Environment variables: the same three `PUBLIC_SANITY_*` values.
+4. **Site configuration → General → Site details → Change site name** →
    `renuenc-studio`.
-3. Environment variables: the same three `PUBLIC_SANITY_*` values, plus
-   - `BUILD_TARGET` = `studio`
-4. Deploy.
-5. Register the Studio's URL with Sanity, or it will refuse to log you in:
+5. Deploy.
+6. Register the Studio URL with Sanity, or it will refuse to log you in:
 
 ```bash
 npx sanity cors add https://renuenc-studio.netlify.app --credentials
 ```
 
 `--credentials` is not optional — see the note in step 2.
+
+Deploy previews of the Studio site get their own URLs, which are not registered
+with Sanity, so the Studio will not load on them. That is expected; use the
+production Studio URL.
 
 ## 5. Make Publish rebuild the site
 
